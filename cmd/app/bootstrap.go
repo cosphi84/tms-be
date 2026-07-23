@@ -9,7 +9,9 @@ import (
 type AppConfig struct {
 	AppName    string
 	AppVersion string
-	db         *gorm.DB
+	DB         *gorm.DB
+
+	UploaderHandler *uploader.UploaderHandler
 }
 
 func NewTmsApp() *AppConfig {
@@ -24,7 +26,7 @@ func NewTmsApp() *AppConfig {
 		panic(err)
 	}
 	// Assign the database connection to the AppConfig struct
-	app.db = db
+	app.DB = db
 
 	return app
 }

@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserModel struct {
+type Model struct {
 	ID          uint64               `gorm:"primaryKey;autoIncrement;not null;column:id;<-:create" json:"id"`
 	Username    string               `gorm:"not null;column:username;index:idx_user_username;type:varchar(255)" json:"username"`
 	Email       string               `gorm:"unique;not null;column:email;index:idx_user_email" json:"email"`
@@ -28,6 +28,6 @@ type UserModel struct {
 	CreatedBy *int64         `gorm:"column:created_by" json:"created_by,omitempty"`
 }
 
-func (UserModel) TableName() string {
+func (Model) TableName() string {
 	return "users"
 }
