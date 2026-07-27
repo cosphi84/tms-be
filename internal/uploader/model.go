@@ -32,9 +32,9 @@ type UploaderModel struct {
 	DeletedBy *int64         `gorm:"column:deleted_by" json:"deleted_by,omitempty"`
 
 	// Relations — mengikuti pola audit-user di StorageLocation
-	CreatedByUser *users.UserModel `gorm:"foreignKey:CreatedBy" json:"created_by_user,omitempty"`
-	UpdatedByUser *users.UserModel `gorm:"foreignKey:UpdatedBy" json:"updated_by_user,omitempty"`
-	DeletedByUser *users.UserModel `gorm:"foreignKey:DeletedBy" json:"deleted_by_user,omitempty"`
+	CreatedByUser *users.Model `gorm:"foreignKey:CreatedBy" json:"created_by_user,omitempty"`
+	UpdatedByUser *users.Model `gorm:"foreignKey:UpdatedBy" json:"updated_by_user,omitempty"`
+	DeletedByUser *users.Model `gorm:"foreignKey:DeletedBy" json:"deleted_by_user,omitempty"`
 }
 
 func (UploaderModel) TableName() string {
