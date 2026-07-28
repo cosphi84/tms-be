@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"time"
 	"tms-be/internal/auth"
+	"tms-be/internal/casbin"
 
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type UserService interface {
-	HashPassword(string) (string, error)
-	VerifyPassword(string, string) bool
 	Create(context.Context, *CreateUserDTO) error
 	AllUsers(context.Context) ([]Model, error)
 	Update(context.Context, uint64, *UpdateUserDTO) error
@@ -24,24 +22,14 @@ type UserService interface {
 
 type userService struct {
 	usrRepo   Repository
-	authorize *auth.RoleService
+	authorize *casbin.Service
 }
 
-func NewUserService(r Repository, a *auth.RoleService) UserService {
+func NewUserService(r Repository, a *casbin.Service) UserService {
 	return &userService{
 		usrRepo:   r,
 		authorize: a,
 	}
-}
-
-func (u *userService) HashPassword(pwd string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
-	return string(bytes), err
-}
-
-func (u *userService) VerifyPassword(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
 }
 
 func (u *userService) Create(ctx context.Context, usr *CreateUserDTO) error {

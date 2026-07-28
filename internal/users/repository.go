@@ -51,8 +51,8 @@ func (usr *userRepos) Delete(ctx context.Context, id uint64) (int, error) {
 	return gorm.G[Model](usr.db).Where("id = ?", id).Delete(ctx)
 }
 
-func (u *userRepos) IsExists(ctx context.Context, email string) (bool, error) {
-	_, err := gorm.G[Model](u.db).
+func (usr *userRepos) IsExists(ctx context.Context, email string) (bool, error) {
+	_, err := gorm.G[Model](usr.db).
 		Where("email = ?", email).
 		Select("id").
 		First(ctx)
