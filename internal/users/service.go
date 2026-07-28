@@ -16,7 +16,7 @@ type UserService interface {
 	VerifyPassword(string, string) bool
 	Create(context.Context, *CreateUserDTO) error
 	AllUsers(context.Context) ([]Model, error)
-	Update(context.Context, uint64, *CreateUserDTO) error
+	Update(context.Context, uint64, *UpdateUserDTO) error
 	Activate(context.Context, uint64) error
 	Deactivate(context.Context, uint64) error
 	Delete(context.Context, uint64) error
@@ -29,7 +29,7 @@ type userService struct {
 
 func NewUserService(r Repository, a *auth.RoleService) UserService {
 	return &userService{
-		usrRepos:  r,
+		usrRepo:   r,
 		authorize: a,
 	}
 }
