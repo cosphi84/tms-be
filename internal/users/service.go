@@ -17,9 +17,9 @@ type UserService interface {
 	Create(context.Context, *CreateUserDTO) error
 	AllUsers(context.Context) ([]Model, error)
 	Update(context.Context, uint64, *CreateUserDTO) error
-	Activate(context.Context, int64) error
-	Deactivate(context.Context, int64) error
-	Delete(context.Context, int64) error
+	Activate(context.Context, uint64) error
+	Deactivate(context.Context, uint64) error
+	Delete(context.Context, uint64) error
 }
 
 type userService struct {
@@ -111,16 +111,19 @@ func (u *userService) Update(ctx context.Context, id uint64, usr *UpdateUserDTO)
 
 		theUser.Password = hashed
 	}
-	if usr.Email != "" {
-		theUser.Email = usr.Email
+
+	if usr.Name != theUser.Username {
+		theUser.Username = usr.Name
 	}
-	if usr.OfficeID > 0 {
+
+	if usr.OfficeID != theUser.OfficeID {
 		theUser.OfficeID = usr.OfficeID
 	}
-	if usr.Image != "" {
+
+	if usr.Image != *theUser.FotoProfile {
 		theUser.FotoProfile = &usr.Image
 	}
-	usr.Name == theUser.Username ? theUser.Username = usr.Name : 
+
 	theUser.UpdatedAt = time.Now()
 
 	if usr.Role != "" {
@@ -138,4 +141,42 @@ func (u *userService) Update(ctx context.Context, id uint64, usr *UpdateUserDTO)
 	return nil
 }
 
-func (u *userService) Activate(ctx context.Context, ID uint64)
+func (u *userService) Activate(ctx context.Context, ID uint64) error {
+	usr, err := u.usrRepo.FindByID(ctx, ID)
+	if err != nil {
+		return err
+	}
+
+	usr.IsActive = true
+	usr.UpdatedAt = time.Now()
+
+	_, err = u.usrRepo.Update(ctx, ID, usr)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (u *userService) Deactivate(ctx context.Context, ID uint64) error {
+	usr, err := u.usrRepo.FindByID(ctx, ID)
+	if err != nil {
+		return err
+	}
+
+	usr.IsActive = false
+	usr.UpdatedAt = time.Now()
+
+	_, err = u.usrRepo.Update(ctx, ID, usr)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *userService) Delete(ctx context.Context, ID uint64) error {
+	_, err := u.usrRepo.Delete(ctx, ID)
+	return err
+}
