@@ -3,11 +3,15 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
+	"os"
 	"time"
+
 	"tms-be/internal/casbin"
 	"tms-be/internal/conf"
 	"tms-be/internal/helpers"
 
+	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -62,11 +66,11 @@ func (a *authServiceImpl) Authenticate(ctx context.Context, dto LoginRequestDTO,
 			usr.FailedLoginAttempt = 0
 		}
 
-		err = a.repo.Udate(ctx, usr)
-
+		_, err = a.repo.Update(ctx, usr.ID, usr)
 		if err != nil {
-			return nil, err
+			return nil, errors.New(fmt.Sprintf("Auth Error: failed login proccess logger error - %s", err.Error()))
 		}
+
 		return nil, errors.New("invalid credentials")
 	}
 
@@ -75,7 +79,10 @@ func (a *authServiceImpl) Authenticate(ctx context.Context, dto LoginRequestDTO,
 	usr.FailedLoginAttempt = 0
 	usr.LockedUntil = nil
 
-	_ = a.repo.Update(usr)
+	_, err = a.repo.Update(ctx, usr.ID, usr)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Auth Error: login proccess logger error - %s", err.Error()))
+	}
 
 	usrRolesRaw, _ := a.role.GetRoleForUser(usr.Email)
 	usrRoles := make([]conf.RoleType, len(usrRolesRaw))
@@ -87,7 +94,7 @@ func (a *authServiceImpl) Authenticate(ctx context.Context, dto LoginRequestDTO,
 		return nil, err
 	}
 
-	return &dto.LoginResponse{
+	return &LoginResponseSTO{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		User:         usr,
@@ -96,4 +103,46 @@ func (a *authServiceImpl) Authenticate(ctx context.Context, dto LoginRequestDTO,
 }
 
 func (a *authServiceImpl) RefreshToken(ctx context.Context, dto RefreshTokenRequestDTO) (*LoginResponseSTO, error) {
+	secret := os.Getenv("APP_JWT_SECRET")
+	var JWTSecret = []byte(secret)
+
+	token, err := jwt.ParseWithClaims(
+		dto.RefreshToken,
+		&JWTClaims{},
+		func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, errors.New("unexpected signing method")
+			}
+			return JWTSecret, nil
+		},
+	)
+
+	if err != nil || !token.Valid {
+		return nil, errors.New("invalid refresh token")
+	}
+
+	claims, ok := token.Claims.(*JWTClaims)
+	if !ok || claims.TokenType != "refresh" {
+		return nil, errors.New("invalid token type")
+	}
+
+	usr, err := a.repo.FindByID(ctx, claims.UserID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	if !usr.IsActive {
+		return nil, errors.New("user is inactive")
+	}
+
+	accessToken, newRefreshToken, err := GenerateTokenPair(usr.ID, usr.OfficeID, claims.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LoginResponseSTO{
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+		User:         usr,
+	}, nil
 }

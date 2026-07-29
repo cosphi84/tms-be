@@ -8,8 +8,10 @@ import (
 )
 
 type Repository interface {
+	FindByID(ctx context.Context, id uint64) (Model, error)
 	FindUser(ctx context.Context, username string) (Model, error)
 	IsExists(ctx context.Context, email string) (bool, error)
+	Update(ctx context.Context, id uint64, user Model) (int, error)
 }
 
 type authRepos struct {
@@ -19,6 +21,11 @@ type authRepos struct {
 func NewAuthRepository(db *gorm.DB) Repository {
 	return &authRepos{db: db}
 }
+
+func (usr *authRepos) FindByID(ctx context.Context, id uint64) (Model, error) {
+	return gorm.G[Model](usr.db).Where("id = ?", id).Take(ctx)
+}
+
 func (usr *authRepos) FindUser(ctx context.Context, username string) (Model, error) {
 	return gorm.G[Model](usr.db).
 		Where("email = ? OR username = ?", username, username).

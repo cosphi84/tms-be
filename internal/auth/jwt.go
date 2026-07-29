@@ -32,7 +32,6 @@ func GenerateTokenPair(UserID uint64, OfficeID uint64, Roles []conf.RoleType) (s
 	accessClaims := JWTClaims{
 		UserID:    UserID,
 		OfficeID:  OfficeID,
-		Role:      Roles,
 		TokenType: "access",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 15)), // Access token expires in 15 minutes
@@ -48,7 +47,6 @@ func GenerateTokenPair(UserID uint64, OfficeID uint64, Roles []conf.RoleType) (s
 	refreshClaims := JWTClaims{
 		UserID:    UserID,
 		OfficeID:  OfficeID,
-		Role:      Roles,
 		TokenType: "refresh",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)), // Refresh token expires in 7 days
