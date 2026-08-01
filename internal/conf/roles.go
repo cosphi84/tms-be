@@ -1,5 +1,7 @@
 package conf
 
+import "slices"
+
 type RoleType string
 
 const (
@@ -11,6 +13,24 @@ const (
 	RoleAuditorCS  RoleType = "auditor_cs"
 	RoleTechnician RoleType = "technician"
 )
+
+// AllRoles = SATU-SATUNYA tempat daftar role didefinisikan. Semua tempat lain
+// (validasi DTO, seeder, dsb) WAJIB baca dari sini, BUKAN hardcode ulang.
+// Nambah/hapus role -> cukup edit slice ini, efeknya otomatis nyebar ke mana-mana.
+var AllRoles = []RoleType{
+	RoleSuperadmin,
+	RoleAdminHQ,
+	RoleSvcHead,
+	RoleManagement,
+	RoleAuditor,
+	RoleAuditorCS,
+	RoleTechnician,
+}
+
+// Valid cek apakah RoleType ini terdaftar di AllRoles.
+func (r RoleType) Valid() bool {
+	return slices.Contains(AllRoles, r)
+}
 
 type Key string
 

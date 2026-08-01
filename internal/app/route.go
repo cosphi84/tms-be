@@ -35,6 +35,7 @@ func (app *Config) SetupRouter(
 		})
 	})
 	app.AuthHandler.RegisterPublicRoutes(api)
+	app.OfficeHandler.RegisterPublicRoutes(api)
 
 	// ---- Authenticated routes (butuh identity, TAPI TANPA RBAC) ----
 	authenticated := api.Group("")
@@ -48,8 +49,8 @@ func (app *Config) SetupRouter(
 	protected.Use(authMW, casbinMW)
 	{
 		app.UploaderHandler.RegisterProtectedRoutes(protected)
-		//app.UsersHandler.RegisterRoutes(protected)
-		///app.OfficeHandler.RegisterRoutes(protected)
+		app.UsersHandler.RegisterRoutes(protected)
+		app.OfficeHandler.RegisterProtectedRoutes(protected)
 	}
 
 }

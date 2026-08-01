@@ -3,7 +3,9 @@ package app
 import (
 	"os"
 	"tms-be/internal/auth"
+	"tms-be/internal/offices"
 	"tms-be/internal/uploader"
+	"tms-be/internal/users"
 
 	"tms-be/internal/casbin"
 	"tms-be/internal/database"
@@ -26,11 +28,13 @@ type Config struct {
 	// per-module handler
 	AuthHandler     *auth.Handler
 	UploaderHandler *uploader.Handler
-	//UsersHandler  *users.Handler
-	//OfficeHandler *offices.Handler
+	UsersHandler    *users.Handler
+	OfficeHandler   *offices.Handler
 }
 
 func TmsAppBootstrap() *Config {
+	registerCustomValidators()
+
 	app := &Config{
 		AppName:    "tms",
 		AppVersion: "0.1.0",
@@ -66,8 +70,8 @@ func TmsAppBootstrap() *Config {
 	// ---- Wiring tiap module ----
 	app.AuthHandler = auth.NewHandler(db)
 	app.UploaderHandler = uploader.NewHandler(db)
-	//app.UsersHandler = users.NewHandler(db)
-	//app.OfficeHandler = offices.NewHandler(db)
+	app.UsersHandler = users.NewHandler(db, app.CasbinSvc)
+	app.OfficeHandler = offices.NewHandler(db)
 
 	return app
 }
