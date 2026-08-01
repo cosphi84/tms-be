@@ -5,7 +5,8 @@ import (
 	"log"
 	"os"
 	"strings"
-	"tms-be/cmd/app"
+
+	"tms-be/internal/app"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,8 +24,9 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	//  Bootstrap the Application
-	app := app.NewTmsApp()
+	// Bootstrap the Application
+	// (nama fungsi harus sama persis dengan yang didefinisikan di bootstrap.go)
+	cfg := app.TmsAppBootstrap()
 
 	// Init Router
 	route := gin.Default()
@@ -35,16 +37,16 @@ func main() {
 	if trustedProxies != "" {
 		proxies = strings.Split(trustedProxies, ",")
 	}
-
 	if err := route.SetTrustedProxies(proxies); err != nil {
 		log.Fatal(err)
 	}
 
 	// Setup Router and bind to the application
-	app.SetupRouter(route)
+	cfg.SetupRouter(route, cfg.AuthenticateMw, cfg.AuthorizeMw)
 
 	// Start the server
 	if err := route.Run(fmt.Sprintf(":%s", port)); err != nil {
 		log.Fatal(err)
 	}
+
 }

@@ -33,7 +33,7 @@ func (usr *authRepos) FindUser(ctx context.Context, username string) (Model, err
 }
 
 func (usr *authRepos) Update(ctx context.Context, id uint64, user Model) (int, error) {
-	return gorm.G[Model](usr.db).Where("id = ?", id).Updates(ctx, user)
+	return gorm.G[Model](usr.db).Where("id = ?", id).Select("*").Updates(ctx, user)
 }
 
 func (usr *authRepos) IsExists(ctx context.Context, email string) (bool, error) {

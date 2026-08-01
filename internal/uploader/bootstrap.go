@@ -2,7 +2,7 @@ package uploader
 
 import "tms-be/cmd/app"
 
-func UploaderBootstrapApp(app *app.AppConfig) {
+func UploaderBootstrapApp(app *app.Config) {
 	localStorage, err := NewLocalStorage()
 	if err != nil {
 		panic(err)

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"time"
 	"tms-be/internal/conf"
@@ -10,54 +11,82 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// getJWTSecret = satu-satunya tempat baca APP_JWT_SECRET dari env.
+// Dipakai oleh ParseToken, GenerateTokenPair, dan middleware.go
+func getJWTSecret() []byte {
+	secret := os.Getenv("APP_JWT_SECRET")
+	if secret == "" {
+		panic("APP_JWT_SECRET environment variable is not set")
+	}
+	return []byte(secret)
+}
+
 func GetClaims(ctx context.Context) (*JWTClaims, error) {
 	value := ctx.Value(conf.AuthContextKey)
 	if value == nil {
 		return nil, errors.New("no auth claims found in context")
 	}
 	claims, ok := value.(*JWTClaims)
-
 	if !ok {
 		return nil, errors.New("auth claims in context have invalid type")
 	}
 	return claims, nil
 }
 
-func GenerateTokenPair(UserID uint64, OfficeID uint64, Roles []conf.RoleType) (string, string, error) {
-	secret := os.Getenv("APP_JWT_SECRET")
-	if secret == "" {
-		panic("APP_JWT_SECRET environment variable is not set")
+// ParseToken parse & validasi JWT string apapun (access ATAU refresh —
+// pengecekan TokenType dilakukan oleh caller, bukan di sini, supaya
+// fungsi ini reusable buat keduanya).
+func ParseToken(tokenString string) (*JWTClaims, error) {
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&JWTClaims{},
+		func(t *jwt.Token) (any, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			}
+			return getJWTSecret(), nil
+		},
+	)
+	if err != nil {
+		return nil, err // biarkan error asli (termasuk jwt.ErrTokenExpired) tembus ke caller
 	}
 
+	claims, ok := token.Claims.(*JWTClaims)
+	if !ok || !token.Valid {
+		return nil, errors.New("invalid token claims")
+	}
+	return claims, nil
+}
+
+// GenerateTokenPair menerbitkan access + refresh token.
+func GenerateTokenPair(userID uint64) (accessToken string, refreshToken string, err error) {
+	secret := getJWTSecret()
+
 	accessClaims := JWTClaims{
-		UserID:    UserID,
-		OfficeID:  OfficeID,
+		UserID:    userID,
 		TokenType: "access",
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 15)), // Access token expires in 15 minutes
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
-	accessString, err := accessToken.SignedString([]byte(secret))
+	accessToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(secret)
 	if err != nil {
 		return "", "", err
 	}
 
 	refreshClaims := JWTClaims{
-		UserID:    UserID,
-		OfficeID:  OfficeID,
+		UserID:    userID,
 		TokenType: "refresh",
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)), // Refresh token expires in 7 days
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	refreshString, err := refreshToken.SignedString([]byte(secret))
+	refreshToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(secret)
 	if err != nil {
 		return "", "", err
 	}
 
-	return accessString, refreshString, nil
+	return accessToken, refreshToken, nil
 }

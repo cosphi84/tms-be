@@ -4,11 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
-
-	"tms-be/internal/casbin"
-	"tms-be/internal/conf"
 	"tms-be/internal/helpers"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -16,22 +12,21 @@ import (
 )
 
 type Service interface {
-	Authenticate(ctx context.Context, dto LoginRequestDTO, ip string) (*LoginResponseSTO, error)
-	RefreshToken(ctx context.Context, dto RefreshTokenRequestDTO) (*LoginResponseSTO, error)
+	Authenticate(ctx context.Context, dto LoginRequestDTO, ip string) (*LoginResponseDTO, error)
+	RefreshToken(ctx context.Context, dto RefreshTokenRequestDTO) (*LoginResponseDTO, error)
 }
+
 type authServiceImpl struct {
 	repo Repository
-	role *casbin.Service
 }
 
 func NewAuthenticateService(authRepo Repository) Service {
-	return &authServiceImpl{
-		repo: authRepo,
-	}
+	return &authServiceImpl{repo: authRepo}
 }
-func (a *authServiceImpl) Authenticate(ctx context.Context, dto LoginRequestDTO, ip string) (*LoginResponseSTO, error) {
-	maxLoginAttempts := 3
-	lockoutDuration := 1 // in hours
+
+func (a *authServiceImpl) Authenticate(ctx context.Context, dto LoginRequestDTO, ip string) (*LoginResponseDTO, error) {
+	const maxLoginAttempts = 3
+	const lockoutDuration = 1 // in hours
 
 	usr, err := a.repo.FindUser(ctx, dto.Email)
 	if err != nil {
@@ -50,7 +45,6 @@ func (a *authServiceImpl) Authenticate(ctx context.Context, dto LoginRequestDTO,
 		if now.Before(*usr.LockedUntil) {
 			return nil, errors.New("account locked")
 		}
-
 		usr.LockedUntil = nil
 		usr.FailedLoginAttempt = 0
 	}
@@ -58,19 +52,16 @@ func (a *authServiceImpl) Authenticate(ctx context.Context, dto LoginRequestDTO,
 	valid := helpers.VerifyPassword(dto.Password, usr.Password)
 	if !valid {
 		nTry := usr.FailedLoginAttempt + 1
-
 		usr.FailedLoginAttempt = nTry
 		if nTry >= maxLoginAttempts {
-			lockedUntil := time.Now().Add(time.Duration(lockoutDuration) * time.Hour)
+			lockedUntil := time.Now().Add(lockoutDuration * time.Hour)
 			usr.LockedUntil = &lockedUntil
 			usr.FailedLoginAttempt = 0
 		}
 
-		_, err = a.repo.Update(ctx, usr.ID, usr)
-		if err != nil {
-			return nil, errors.New(fmt.Sprintf("Auth Error: failed login proccess logger error - %s", err.Error()))
+		if _, err := a.repo.Update(ctx, usr.ID, usr); err != nil {
+			return nil, fmt.Errorf("auth: failed to persist login attempt: %w", err)
 		}
-
 		return nil, errors.New("invalid credentials")
 	}
 
@@ -79,50 +70,34 @@ func (a *authServiceImpl) Authenticate(ctx context.Context, dto LoginRequestDTO,
 	usr.FailedLoginAttempt = 0
 	usr.LockedUntil = nil
 
-	_, err = a.repo.Update(ctx, usr.ID, usr)
-	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Auth Error: login proccess logger error - %s", err.Error()))
+	if _, err := a.repo.Update(ctx, usr.ID, usr); err != nil {
+		return nil, fmt.Errorf("auth: failed to persist login success: %w", err)
 	}
 
-	usrRolesRaw, _ := a.role.GetRoleForUser(usr.Email)
-	usrRoles := make([]conf.RoleType, len(usrRolesRaw))
-	for i, r := range usrRolesRaw {
-		usrRoles[i] = conf.RoleType(r)
-	}
-	accessToken, refreshToken, err := GenerateTokenPair(usr.ID, usr.OfficeID, usrRoles)
+	accessToken, refreshToken, err := GenerateTokenPair(usr.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &LoginResponseSTO{
+	return &LoginResponseDTO{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		User:         usr,
 	}, nil
-
 }
 
-func (a *authServiceImpl) RefreshToken(ctx context.Context, dto RefreshTokenRequestDTO) (*LoginResponseSTO, error) {
-	secret := os.Getenv("APP_JWT_SECRET")
-	var JWTSecret = []byte(secret)
-
-	token, err := jwt.ParseWithClaims(
-		dto.RefreshToken,
-		&JWTClaims{},
-		func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, errors.New("unexpected signing method")
-			}
-			return JWTSecret, nil
-		},
-	)
-
-	if err != nil || !token.Valid {
+func (a *authServiceImpl) RefreshToken(ctx context.Context, dto RefreshTokenRequestDTO) (*LoginResponseDTO, error) {
+	claims, err := ParseToken(dto.RefreshToken)
+	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			// Refresh token juga expired -> user BENERAN harus login ulang.
+			// Ini satu-satunya titik di mana "user harus tau" sesi habis.
+			return nil, errors.New("session expired, please login again")
+		}
 		return nil, errors.New("invalid refresh token")
 	}
 
-	claims, ok := token.Claims.(*JWTClaims)
-	if !ok || claims.TokenType != "refresh" {
+	if claims.TokenType != "refresh" {
 		return nil, errors.New("invalid token type")
 	}
 
@@ -130,17 +105,18 @@ func (a *authServiceImpl) RefreshToken(ctx context.Context, dto RefreshTokenRequ
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
-
 	if !usr.IsActive {
 		return nil, errors.New("user is inactive")
 	}
 
-	accessToken, newRefreshToken, err := GenerateTokenPair(usr.ID, usr.OfficeID, claims.Role)
+	// Rotate: refresh token lama otomatis "mati" begitu client pakai yang baru
+	// (client-side, cookie lama ditimpa). Ini praktik standar refresh rotation.
+	accessToken, newRefreshToken, err := GenerateTokenPair(usr.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &LoginResponseSTO{
+	return &LoginResponseDTO{
 		AccessToken:  accessToken,
 		RefreshToken: newRefreshToken,
 		User:         usr,

@@ -4,10 +4,15 @@ type LoginRequestDTO struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8"`
 }
-type LoginResponseSTO struct {
-	AccessToken  string      `json:"access_token"`
-	RefreshToken string      `json:"refresh_token"`
-	User         interface{} `json:"user"`
+
+type LoginResponseDTO struct {
+	AccessToken string      `json:"access_token"`
+	User        interface{} `json:"user"`
+
+	// RefreshToken SENGAJA json:"-" — gak boleh pernah muncul di response
+	// body. Handler baca field ini buat di-set sebagai HttpOnly cookie,
+	// tapi field ini tidak pernah ter-serialize ke JSON yang dikirim ke FE.
+	RefreshToken string `json:"-"`
 }
 
 type RefreshTokenRequestDTO struct {
