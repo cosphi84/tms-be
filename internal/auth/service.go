@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"tms-be/internal/helpers"
 
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
@@ -49,7 +48,7 @@ func (a *authServiceImpl) Authenticate(ctx context.Context, dto LoginRequestDTO,
 		usr.FailedLoginAttempt = 0
 	}
 
-	valid := helpers.VerifyPassword(dto.Password, usr.Password)
+	valid := VerifyPassword(dto.Password, usr.Password)
 	if !valid {
 		nTry := usr.FailedLoginAttempt + 1
 		usr.FailedLoginAttempt = nTry

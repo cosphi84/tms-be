@@ -3,6 +3,7 @@ package app
 import (
 	"os"
 	"tms-be/internal/auth"
+	"tms-be/internal/uploader"
 
 	"tms-be/internal/casbin"
 	"tms-be/internal/database"
@@ -23,7 +24,8 @@ type Config struct {
 	AuthorizeMw    gin.HandlerFunc
 
 	// per-module handler
-	AuthHandler *auth.Handler
+	AuthHandler     *auth.Handler
+	UploaderHandler *uploader.Handler
 	//UsersHandler  *users.Handler
 	//OfficeHandler *offices.Handler
 }
@@ -63,6 +65,7 @@ func TmsAppBootstrap() *Config {
 
 	// ---- Wiring tiap module ----
 	app.AuthHandler = auth.NewHandler(db)
+	app.UploaderHandler = uploader.NewHandler(db)
 	//app.UsersHandler = users.NewHandler(db)
 	//app.OfficeHandler = offices.NewHandler(db)
 

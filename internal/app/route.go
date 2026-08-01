@@ -47,6 +47,7 @@ func (app *Config) SetupRouter(
 	protected := api.Group("")
 	protected.Use(authMW, casbinMW)
 	{
+		app.UploaderHandler.RegisterProtectedRoutes(protected)
 		//app.UsersHandler.RegisterRoutes(protected)
 		///app.OfficeHandler.RegisterRoutes(protected)
 	}

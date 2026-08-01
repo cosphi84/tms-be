@@ -6,60 +6,50 @@ import (
 	"gorm.io/gorm"
 )
 
-type UploaderRepository interface {
-	Create(ctx context.Context, file *UploaderModel) error
-	FindByUUID(ctx context.Context, uuid string) (UploaderModel, error)
-	Update(ctx context.Context, id int64, file UploaderModel) error
-	SoftDelete(ctx context.Context, id int64) error
+type Repository interface {
+	Create(ctx context.Context, file *Model) error
+	FindByUUID(ctx context.Context, uuid string) (Model, error)
+	Update(ctx context.Context, id uint64, file Model) (int, error)
+	SoftDelete(ctx context.Context, mdl Model) (int, error)
 
 	// WithTx mengembalikan instance FileRepository baru yang beroperasi
 	// di dalam transaction milik caller (mis. ToolsService.ReplaceIcon).
 	// Ini memungkinkan File Manager Module ikut serta dalam atomic
 	// transaction lintas-modul tanpa File Manager perlu tahu apa-apa
 	// soal domain caller — caller yang mengontrol Begin/Commit/Rollback.
-	WithTx(tx *gorm.DB) UploaderRepository
+	WithTx(tx *gorm.DB) Repository
 }
 
-type uploaderRepository struct {
+type uploadRepos struct {
 	db *gorm.DB
 }
 
-func NewUploaderRepository(db *gorm.DB) UploaderRepository {
-	return &uploaderRepository{db: db}
+func NewUploaderRepository(db *gorm.DB) Repository {
+	return &uploadRepos{db: db}
 }
 
-func (r *uploaderRepository) Create(ctx context.Context, file *UploaderModel) error {
-	err := gorm.G[UploaderModel](r.db).Create(ctx, file)
+func (upd *uploadRepos) Create(ctx context.Context, file *Model) error {
+	err := gorm.G[Model](upd.db).Create(ctx, file)
 	return err
 }
 
-func (r *uploaderRepository) FindByUUID(ctx context.Context, uuid string) (UploaderModel, error) {
-	file, err := gorm.G[UploaderModel](r.db).Where("uuid = ?", uuid).First(ctx)
+func (upd *uploadRepos) FindByUUID(ctx context.Context, uuid string) (Model, error) {
+	file, err := gorm.G[Model](upd.db).Where("uuid = ?", uuid).Take(ctx)
 	return file, err
 }
 
-func (r *uploaderRepository) Update(ctx context.Context, id int64, file UploaderModel) error {
-	rows, err := gorm.G[UploaderModel](r.db).Where("id = ?", id).Updates(ctx, file)
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
-		return gorm.ErrRecordNotFound
-	}
-	return nil
+func (upd *uploadRepos) Update(ctx context.Context, id uint64, file Model) (int, error) {
+	return gorm.G[Model](upd.db).Where("id = ?", id).Select("*").Updates(ctx, file)
 }
 
-func (r *uploaderRepository) SoftDelete(ctx context.Context, id int64) error {
-	rows, err := gorm.G[UploaderModel](r.db).Where("id = ?", id).Delete(ctx)
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
-		return gorm.ErrRecordNotFound
-	}
-	return nil
+func (upd *uploadRepos) SoftDelete(ctx context.Context, mdl Model) (int, error) {
+	return gorm.G[Model](upd.db).
+		Select("deleted_at", "deleted_by").
+		Where("id = ?", mdl.ID).
+		Updates(ctx, mdl)
+
 }
 
-func (r *uploaderRepository) WithTx(tx *gorm.DB) UploaderRepository {
-	return &uploaderRepository{db: tx}
+func (upd *uploadRepos) WithTx(tx *gorm.DB) Repository {
+	return &uploadRepos{db: tx}
 }

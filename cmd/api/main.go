@@ -9,10 +9,15 @@ import (
 	"tms-be/internal/app"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	// Get Port Configuration
+	if err := godotenv.Load(); err != nil {
+		log.Println("no .env file found, relying on OS environment variables")
+	}
+
 	port := os.Getenv("APP_PORT")
 	if port == "" {
 		panic("APP_PORT not setup yet.")

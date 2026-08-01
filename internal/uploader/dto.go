@@ -2,17 +2,19 @@ package uploader
 
 import "time"
 
-type UploadRequestDto struct {
+type UploadRequestDTO struct {
 	Folder string `form:"folder" binding:"required"`
+	Access bool   `form:"access" binding:"required"`
 }
 
-type UploadResponseDto struct {
-	ID           int64     `json:"id"`
+type UploadResponseDTO struct {
+	ID           uint64    `json:"id"`
 	UUID         string    `json:"uuid"`
 	OriginalName string    `json:"original_name"`
 	MimeType     string    `json:"mime_type"`
 	Extension    string    `json:"extension"`
-	Size         int64     `json:"size"`
+	Size         uint64    `json:"size"`
+	IsPublic     bool      `json:"is_public"`
 	Checksum     string    `json:"checksum"`
 	URL          string    `json:"url"`
 	IsArchived   bool      `json:"is_archived"`
@@ -20,6 +22,7 @@ type UploadResponseDto struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
-type ReplaceRequestDto struct {
+type ReplaceRequestDTO struct {
 	Folder string `form:"folder" binding:"required"`
+	Access bool   `form:"access" binding:"required"`
 }

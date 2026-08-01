@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS asset_files (
               extension VARCHAR(20) NOT NULL,
               size BIGINT NOT NULL,
               checksum VARCHAR(64) NOT NULL,
-
+              is_public BOOLEAN NOT NULL DEFAULT FALSE,
               path VARCHAR(500) NOT NULL,
               storage VARCHAR(50) NOT NULL DEFAULT 'local',
 
@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS asset_files (
               created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
               updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
               created_by BIGINT NULL REFERENCES users(id),
-              updated_by BIGINT NULL REFERENCES users(id),
               deleted_at TIMESTAMPTZ NULL,
               deleted_by BIGINT NULL REFERENCES users(id)
 );
