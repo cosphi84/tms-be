@@ -1,5 +1,3 @@
--- Sesuaikan nomor urut file ini sama konvensi migration tool kamu.
-
 CREATE TABLE IF NOT EXISTS storage_locations (
      id        BIGSERIAL PRIMARY KEY,
      code      VARCHAR(20)  NOT NULL,

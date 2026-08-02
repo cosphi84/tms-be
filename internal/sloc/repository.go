@@ -94,7 +94,10 @@ func (r *repositoryImpl) IsCodeExists(ctx context.Context, code string) (bool, e
 }
 
 func (r *repositoryImpl) Update(ctx context.Context, id uint64, updates map[string]interface{}) error {
-	result := r.db.WithContext(ctx).Model(&Model{}).Where("id = ?", id).Updates(updates)
+	result := r.db.WithContext(ctx).
+		Model(&Model{}).
+		Where("id = ?", id).
+		Updates(updates)
 	if result.Error != nil {
 		return result.Error
 	}
