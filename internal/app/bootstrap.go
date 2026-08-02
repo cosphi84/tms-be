@@ -5,6 +5,7 @@ import (
 	"tms-be/internal/auth"
 	officeleaders "tms-be/internal/office-leaders"
 	"tms-be/internal/offices"
+	"tms-be/internal/sloc"
 	"tms-be/internal/uploader"
 	"tms-be/internal/users"
 
@@ -32,6 +33,7 @@ type Config struct {
 	UsersHandler        *users.Handler
 	OfficeHandler       *offices.Handler
 	OfficeLeaderHandler *officeleaders.Handler
+	SlocHandler         *sloc.Handler
 }
 
 func TmsAppBootstrap() *Config {
@@ -75,6 +77,7 @@ func TmsAppBootstrap() *Config {
 	app.UsersHandler = users.NewHandler(db, app.CasbinSvc)
 	app.OfficeHandler = offices.NewHandler(db)
 	app.OfficeLeaderHandler = officeleaders.NewHandler(db)
+	app.SlocHandler = sloc.NewHandler(db)
 
 	return app
 }

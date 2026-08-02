@@ -25,7 +25,7 @@ CREATE INDEX IF NOT EXISTS idx_office_leaders_user_id   ON office_leaders (user_
 -- index ini yang bakal nolak insert kedua dengan error unique violation.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_office_leaders_active_per_office
     ON office_leaders (office_id)
-    WHERE end_date IS NULL AND deleted_at IS N  ULL;
+    WHERE end_date IS NULL AND deleted_at IS NULL;
 
 -- ATURAN #2: cuma boleh ada 1 assignment AKTIF per user (satu user gak bisa
 -- jadi leader di 2 office bersamaan).
