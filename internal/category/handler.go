@@ -21,7 +21,7 @@ func NewHandler(db *gorm.DB) *Handler {
 }
 
 func parseIDParam(c *gin.Context) (uint32, error) {
-	val, err := strconv.ParseUint(c.Param("id"), 10, 32
+	val, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		return 0, err
 	}
