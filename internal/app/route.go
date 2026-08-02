@@ -35,13 +35,14 @@ func (app *Config) SetupRouter(
 		})
 	})
 	app.AuthHandler.RegisterPublicRoutes(api)
-	app.OfficeHandler.RegisterPublicRoutes(api)
 
 	// ---- Authenticated routes (butuh identity, TAPI TANPA RBAC) ----
 	authenticated := api.Group("")
 	authenticated.Use(authMW)
 	{
 		app.AuthHandler.RegisterProtectedRoutes(authenticated)
+		app.OfficeHandler.RegisterPublicRoutes(authenticated)
+		app.OfficeLeaderHandler.RegisterAuthenticatedRoutes(authenticated) // list, detail, active-by-offic
 	}
 
 	// ---- Fully protected routes (wajib login + lolos authorization) ----
@@ -51,6 +52,7 @@ func (app *Config) SetupRouter(
 		app.UploaderHandler.RegisterProtectedRoutes(protected)
 		app.UsersHandler.RegisterRoutes(protected)
 		app.OfficeHandler.RegisterProtectedRoutes(protected)
+		app.OfficeLeaderHandler.RegisterProtectedRoutes(protected)
 	}
 
 }

@@ -3,6 +3,7 @@ package app
 import (
 	"os"
 	"tms-be/internal/auth"
+	officeleaders "tms-be/internal/office-leaders"
 	"tms-be/internal/offices"
 	"tms-be/internal/uploader"
 	"tms-be/internal/users"
@@ -26,10 +27,11 @@ type Config struct {
 	AuthorizeMw    gin.HandlerFunc
 
 	// per-module handler
-	AuthHandler     *auth.Handler
-	UploaderHandler *uploader.Handler
-	UsersHandler    *users.Handler
-	OfficeHandler   *offices.Handler
+	AuthHandler         *auth.Handler
+	UploaderHandler     *uploader.Handler
+	UsersHandler        *users.Handler
+	OfficeHandler       *offices.Handler
+	OfficeLeaderHandler *officeleaders.Handler
 }
 
 func TmsAppBootstrap() *Config {
@@ -72,6 +74,7 @@ func TmsAppBootstrap() *Config {
 	app.UploaderHandler = uploader.NewHandler(db)
 	app.UsersHandler = users.NewHandler(db, app.CasbinSvc)
 	app.OfficeHandler = offices.NewHandler(db)
+	app.OfficeLeaderHandler = officeleaders.NewHandler(db)
 
 	return app
 }
