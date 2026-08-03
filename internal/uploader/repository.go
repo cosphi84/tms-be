@@ -9,6 +9,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, file *Model) error
 	FindByUUID(ctx context.Context, uuid string) (Model, error)
+	FindByID(ctx context.Context, id uint64) (Model, error)
 	Update(ctx context.Context, id uint64, file Model) (int, error)
 	SoftDelete(ctx context.Context, mdl Model) (int, error)
 
@@ -48,6 +49,11 @@ func (upd *uploadRepos) SoftDelete(ctx context.Context, mdl Model) (int, error) 
 		Where("id = ?", mdl.ID).
 		Updates(ctx, mdl)
 
+}
+
+func (upd *uploadRepos) FindByID(ctx context.Context, id uint64) (Model, error) {
+	file, err := gorm.G[Model](upd.db).Where("id = ?", id).Take(ctx)
+	return file, err
 }
 
 func (upd *uploadRepos) WithTx(tx *gorm.DB) Repository {

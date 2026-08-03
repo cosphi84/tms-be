@@ -13,7 +13,7 @@ type Repository interface {
 	Create(ctx context.Context, model *Model) error
 	FindAllPaginated(ctx context.Context, req *pagination.DtoPaginationRequest) ([]Model, int64, error)
 	FindByID(ctx context.Context, id uint64) (Model, error)
-	ToolsIsExists(ctx context.Context, toolID string) (bool, error)
+	ToolsIsExists(ctx context.Context, tcode string, tname string) (bool, error)
 	Update(ctx context.Context, id uint64, updates map[string]interface{}) error
 	Delete(ctx context.Context, id uint64) error
 }
@@ -22,7 +22,7 @@ type reposImpl struct {
 	db *gorm.DB
 }
 
-func NewMToolsRepository(db *gorm.DB) Repository {
+func NewRepository(db *gorm.DB) Repository {
 	return &reposImpl{db: db}
 }
 
@@ -101,9 +101,9 @@ func (r *reposImpl) FindByID(ctx context.Context, id uint64) (Model, error) {
 }
 
 // ToolsIsExists implements [Repository].
-func (r *reposImpl) ToolsIsExists(ctx context.Context, toolID string) (bool, error) {
+func (r *reposImpl) ToolsIsExists(ctx context.Context, tcode string, tname string) (bool, error) {
 	var count int64
-	result := r.db.WithContext(ctx).Model(&Model{}).Where("name = ?", toolID).Count(&count)
+	result := r.db.WithContext(ctx).Model(&Model{}).Where("code = ? AND name = ?", tcode, tname).Count(&count)
 	if result.Error != nil {
 		return false, result.Error
 	}

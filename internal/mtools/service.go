@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"tms-be/internal/category"
 	"tms-be/internal/groups"
 	"tms-be/internal/pagination"
@@ -15,7 +14,7 @@ import (
 
 type Service interface {
 	Create(ctx context.Context, dto CreateToolDTO) error
-	List(ctx context.Context, categoryID *uint64, req pagination.DtoPaginationRequest) (*pagination.DtoPaginationResponse, error)
+	List(ctx context.Context, req *pagination.DtoPaginationRequest) (*pagination.DtoPaginationResponse, error)
 	FindByID(ctx context.Context, id uint64) (*Model, error)
 	Update(ctx context.Context, id uint64, dto UpdateToolDTO) error
 	Delete(ctx context.Context, id uint64) error
@@ -29,7 +28,12 @@ type serviceImpl struct {
 }
 
 func NewService(repo Repository, categoryRepo category.Repository, groupRepo groups.Repository, fileRepo uploader.Repository) Service {
-	return &serviceImpl{repo: repo, categoryRepo: categoryRepo, groupRepo: groupRepo, fileRepo: fileRepo}
+	return &serviceImpl{
+		repo:         repo,
+		categoryRepo: categoryRepo,
+		groupRepo:    groupRepo,
+		fileRepo:     fileRepo,
+	}
 }
 
 func (s *serviceImpl) Create(ctx context.Context, dto CreateToolDTO) error {
@@ -56,7 +60,7 @@ func (s *serviceImpl) Create(ctx context.Context, dto CreateToolDTO) error {
 		}
 	}
 
-	exists, err := s.repo.ToolsIsExists(ctx, dto.Code)
+	exists, err := s.repo.ToolsIsExists(ctx, dto.Code, dto.Name)
 	if err != nil {
 		return err
 	}
@@ -67,24 +71,23 @@ func (s *serviceImpl) Create(ctx context.Context, dto CreateToolDTO) error {
 	m := &Model{
 		Code:        dto.Code,
 		Name:        dto.Name,
-		Merk:        dto.Merk,
+		Brand:       dto.Brand,
 		Type:        dto.Type,
 		SerialNum:   dto.SerialNum,
-		Billable:    dto.Billable,
 		CategoryID:  dto.CategoryID,
-		Group:       dto.Group,
+		GroupID:     dto.GroupID,
 		Price:       dto.Price,
 		UsagePeriod: dto.UsagePeriod,
 		IsActive:    true,
 	}
-	if dto.PhotoUUID != "" {
-		m.PhotoUUID = &dto.PhotoUUID
+	if dto.PhotoID != 0 {
+		m.PhotoID = &dto.PhotoID
 	}
 
 	return s.repo.Create(ctx, m)
 }
 
-func (s *serviceImpl) List(ctx context.Context, categoryID *uint64, req pagination.DtoPaginationRequest) (*pagination.DtoPaginationResponse, error) {
+func (s *serviceImpl) List(ctx context.Context, req *pagination.DtoPaginationRequest) (*pagination.DtoPaginationResponse, error) {
 	if req.Page < 1 {
 		req.Page = 1
 	}
@@ -95,7 +98,7 @@ func (s *serviceImpl) List(ctx context.Context, categoryID *uint64, req paginati
 		req.Limit = 100
 	}
 
-	list, total, err := s.repo.FindAllPaginated(ctx, categoryID, req)
+	list, total, err := s.repo.FindAllPaginated(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -122,27 +125,11 @@ func (s *serviceImpl) FindByID(ctx context.Context, id uint64) (*Model, error) {
 	return &m, nil
 }
 
-func (s *serviceImpl) Options(ctx context.Context) ([]ToolOption, error) {
-	all, err := s.repo.FindAllForSelect(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	options := make([]ToolOption, 0, len(all))
-	for _, m := range all {
-		options = append(options, ToolOption{
-			Value: strconv.FormatUint(m.ID, 10),
-			Label: fmt.Sprintf("%s - %s", m.Code, m.Name),
-		})
-	}
-	return options, nil
-}
-
 func (s *serviceImpl) Update(ctx context.Context, id uint64, dto UpdateToolDTO) error {
 	updates := map[string]interface{}{}
 
-	if dto.Code != "" {
-		exists, err := s.repo.ToolsIsExists(ctx, dto.Code)
+	if dto.Code != "" && dto.Name != "" {
+		exists, err := s.repo.ToolsIsExists(ctx, dto.Code, dto.Name)
 		if err != nil {
 			return err
 		}
@@ -151,15 +138,15 @@ func (s *serviceImpl) Update(ctx context.Context, id uint64, dto UpdateToolDTO) 
 			return err
 		}
 		if exists && current.Code != dto.Code {
-			return fmt.Errorf("tool with code %s already exists", dto.Code)
+			return fmt.Errorf("tool with code %s and name %s already exists", dto.Code, dto.Name)
 		}
 		updates["code"] = dto.Code
 	}
 	if dto.Name != "" {
 		updates["name"] = dto.Name
 	}
-	if dto.Merk != "" {
-		updates["merk"] = dto.Merk
+	if dto.Brand != "" {
+		updates["brand"] = dto.Brand
 	}
 	if dto.Type != "" {
 		updates["type"] = dto.Type
@@ -167,9 +154,7 @@ func (s *serviceImpl) Update(ctx context.Context, id uint64, dto UpdateToolDTO) 
 	if dto.SerialNum != "" {
 		updates["serial_num"] = dto.SerialNum
 	}
-	if dto.Billable != nil {
-		updates["billable"] = *dto.Billable
-	}
+
 	if dto.CategoryID != 0 {
 		if _, err := s.categoryRepo.FindByID(ctx, dto.CategoryID); err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -179,11 +164,11 @@ func (s *serviceImpl) Update(ctx context.Context, id uint64, dto UpdateToolDTO) 
 		}
 		updates["category_id"] = dto.CategoryID
 	}
-	if dto.Group != "" {
-		updates["group_name"] = dto.Group
+	if dto.GroupID != 0 {
+		updates["group_id"] = dto.GroupID
 	}
-	if dto.PhotoUUID != "" {
-		updates["photo_uuid"] = dto.PhotoUUID
+	if dto.PhotoID != 0 {
+		updates["photo_id"] = dto.PhotoID
 	}
 	if dto.Price != 0 {
 		updates["price"] = dto.Price

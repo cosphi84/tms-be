@@ -45,6 +45,7 @@ func (app *Config) SetupRouter(
 		app.OfficeLeaderHandler.RegisterAuthenticatedRoutes(authenticated) // list, detail, active-by-offic
 		app.SlocHandler.RegisterAuthenticatedRoutes(authenticated)
 		app.GroupsHandler.RegisterAuthenticatedRoutes(authenticated)
+		app.MtoolsHandler.RegisterAuthenticatedRoutes(authenticated)
 	}
 
 	// ---- Fully protected routes (wajib login + lolos authorization) ----
@@ -57,6 +58,7 @@ func (app *Config) SetupRouter(
 		app.OfficeLeaderHandler.RegisterProtectedRoutes(protected)
 		app.SlocHandler.RegisterProtectedRoutes(protected)
 		app.GroupsHandler.RegisterProtectedRoutes(protected)
+		app.MtoolsHandler.RegisterProtectedRoutes(protected)
 	}
 
 }
