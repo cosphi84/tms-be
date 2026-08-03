@@ -1,4 +1,4 @@
-package category
+package groups
 
 import (
 	"net/http"
@@ -64,7 +64,7 @@ func (h *Handler) GetOptions(c *gin.Context) {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	var dto CreateCategoryDTO
+	var dto CreateGroupDTO
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -84,7 +84,7 @@ func (h *Handler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	request := UpdateCategoryDTO{}
+	request := UpdateGroupDTO{}
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -3,6 +3,7 @@ package app
 import (
 	"os"
 	"tms-be/internal/auth"
+	"tms-be/internal/groups"
 	officeleaders "tms-be/internal/office-leaders"
 	"tms-be/internal/offices"
 	"tms-be/internal/sloc"
@@ -34,6 +35,7 @@ type Config struct {
 	OfficeHandler       *offices.Handler
 	OfficeLeaderHandler *officeleaders.Handler
 	SlocHandler         *sloc.Handler
+	GroupsHandler       *groups.Handler
 }
 
 func TmsAppBootstrap() *Config {
@@ -78,6 +80,7 @@ func TmsAppBootstrap() *Config {
 	app.OfficeHandler = offices.NewHandler(db)
 	app.OfficeLeaderHandler = officeleaders.NewHandler(db)
 	app.SlocHandler = sloc.NewHandler(db)
+	app.GroupsHandler = groups.NewHandler(db)
 
 	return app
 }
