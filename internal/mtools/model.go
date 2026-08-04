@@ -21,11 +21,11 @@ type Model struct {
 	Type      string `gorm:"type:varchar(100);not null" json:"type"`
 	SerialNum string `gorm:"type:varchar(100);column:serial_num" json:"serial_num"`
 
-	CategoryID uint32         `gorm:"not null;column:category_id;index:idx_mtools_category_id" json:"category_id"`
-	Category   category.Model `gorm:"foreignKey:CategoryID;references:ID" json:"category,omitempty"`
+	CategoryID uint32          `gorm:"not null;column:category_id;index:idx_mtools_category_id" json:"category_id"`
+	Category   *category.Model `gorm:"foreignKey:CategoryID;references:ID" json:"category,omitempty"`
 
-	GroupID uint32       `gorm:"column:group_id;references:ID" json:"group_id,omitempty"`
-	Group   groups.Model `gorm:"foreignKey:GroupID;references:ID" json:"group,omitempty"`
+	GroupID uint32        `gorm:"column:group_id;references:ID" json:"group_id,omitempty"`
+	Group   *groups.Model `gorm:"foreignKey:GroupID;references:ID" json:"group,omitempty"`
 
 	PhotoID *uint64         `gorm:"type:varchar(36);column:photo_uuid" json:"photo_id,omitempty"`
 	Photo   *uploader.Model `gorm:"foreignKey:PhotoID;references:UUID" json:"photo,omitempty"`
