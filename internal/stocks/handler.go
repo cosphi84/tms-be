@@ -3,9 +3,9 @@ package stocks
 import (
 	"net/http"
 	"strconv"
-	mtools "tms-be/internal/master-tools"
+	"tms-be/internal/mtools"
 	"tms-be/internal/pagination"
-	sloc "tms-be/internal/storage-locations"
+	"tms-be/internal/sloc"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

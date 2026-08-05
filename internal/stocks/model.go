@@ -2,8 +2,8 @@ package stocks
 
 import (
 	"time"
-	mtools "tms-be/internal/mtools"
-	sloc "tms-be/internal/sloc"
+	"tms-be/internal/mtools"
+	"tms-be/internal/sloc"
 
 	"gorm.io/gorm"
 )

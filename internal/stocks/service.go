@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	mtools "tms-be/internal/master-tools"
+	"tms-be/internal/mtools"
 	"tms-be/internal/pagination"
-	sloc "tms-be/internal/storage-locations"
+	"tms-be/internal/sloc"
 
 	"gorm.io/gorm"
 )
