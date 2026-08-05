@@ -11,9 +11,15 @@
     <file url="file://$PROJECT_DIR$/migrations/000005_create_office_leaders_table.up.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
     <file url="file://$PROJECT_DIR$/migrations/000006_create_file_assets_table.down.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
     <file url="file://$PROJECT_DIR$/migrations/000006_create_file_assets_table.up.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
-    <file url="file://$PROJECT_DIR$/migrations/000007_create_storage_location_table.down.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
-    <file url="file://$PROJECT_DIR$/migrations/000007_create_storage_location_table.up.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
+    <file url="file://$PROJECT_DIR$/migrations/000007_create_tool_group_table.down.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
+    <file url="file://$PROJECT_DIR$/migrations/000007_create_tool_group_table.up.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
     <file url="file://$PROJECT_DIR$/migrations/000008_create_tool_category_table.down.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
     <file url="file://$PROJECT_DIR$/migrations/000008_create_tool_category_table.up.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
+    <file url="file://$PROJECT_DIR$/migrations/000009_create_storage_location_table.down.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
+    <file url="file://$PROJECT_DIR$/migrations/000009_create_storage_location_table.up.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
+    <file url="file://$PROJECT_DIR$/migrations/000010_create_master_tools_table.down.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
+    <file url="file://$PROJECT_DIR$/migrations/000010_create_master_tools_table.up.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
+    <file url="file://$PROJECT_DIR$/migrations/000011_create_stocks_table.down.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
+    <file url="file://$PROJECT_DIR$/migrations/000011_create_stocks_table.up.sql" value="99d4597a-4f2a-4a51-9d55-87e0a8649556" />
   </component>
 </project>
