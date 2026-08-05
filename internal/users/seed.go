@@ -2,6 +2,7 @@ package users
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"tms-be/internal/auth"
 	"tms-be/internal/casbin"
@@ -10,43 +11,41 @@ import (
 	"gorm.io/gorm"
 )
 
-const seedDefaultPassword = "Password123!" // WAJIB diganti user pas login pertama di real project
+func Seed(db *gorm.DB, casbinSvc *casbin.Service, office uint64) error {
+	su_name := os.Getenv("SU_USERNAME")
+	su_pass := os.Getenv("SU_PASSWORD")
+	su_email := os.Getenv("SU_EMAIL")
+	su_role := conf.RoleSuperadmin
 
-// Seed bikin 1 user per role dari conf.AllRoles, idempotent (aman dijalankan
-// berkali-kali). Nambah role baru? Cukup edit conf/roles.go — file ini gak
-// perlu disentuh sama sekali.
-// officeID WAJIB dikirim dari caller (cmd/seed/main.go) — karena
-// users.OfficeID itu NOT NULL + foreign key ke tabel offices, jadi
-// office seeder HARUS jalan duluan sebelum users.Seed dipanggil.
-func Seed(db *gorm.DB, casbinSvc *casbin.Service, officeID uint64) error {
-	hashed, err := auth.HashPassword(seedDefaultPassword)
+	if su_name == "" || su_pass == "" || su_email == "" {
+		return fmt.Errorf("env SU_USERNAME or SU_PASSWORD or SU_EMAIL are empty")
+	}
+
+	hashed, err := auth.HashPassword(su_pass)
 	if err != nil {
 		return fmt.Errorf("users seed: failed to hash default password: %w", err)
 	}
 
-	for _, role := range conf.AllRoles {
-		email := fmt.Sprintf("%s@tms.local", role)
+	if office == 0 {
+		return fmt.Errorf("users seed: office is zero")
+	}
+	user := Model{
+		Username: su_name,
+		Email:    su_email,
+		Password: hashed,
+		OfficeID: office,
+		IsActive: true,
+	}
 
-		user := Model{
-			Username: string(role),
-			Email:    email,
-			Password: hashed,
-			OfficeID: officeID,
-			IsActive: true,
-		}
+	result := db.Where(Model{Email: su_email}).FirstOrCreate(&user)
+	if result.Error != nil {
+		return fmt.Errorf("users seed: failed to seed %s: %w", su_email, result.Error)
+	}
 
-		// FirstOrCreate by email -> idempotent, gak bikin duplikat kalau
-		// seeder dijalankan ulang.
-		result := db.Where(Model{Email: email}).FirstOrCreate(&user)
-		if result.Error != nil {
-			return fmt.Errorf("users seed: failed to seed %s: %w", email, result.Error)
-		}
-
-		// Subjek Casbin = user_id (string), konsisten sama seluruh flow.
-		sub := strconv.FormatUint(user.ID, 10)
-		if _, err := casbinSvc.GrantRole(sub, string(role)); err != nil {
-			return fmt.Errorf("users seed: failed to grant role %s to %s: %w", role, email, err)
-		}
+	// Subjek Casbin = user_id (string), konsisten sama seluruh flow.
+	sub := strconv.FormatUint(user.ID, 10)
+	if _, err := casbinSvc.GrantRole(sub, string(su_role)); err != nil {
+		return fmt.Errorf("users seed: failed to grant role %s to %s: %w", su_role, su_email, err)
 	}
 
 	return nil
