@@ -8,6 +8,7 @@ import (
 	"tms-be/internal/offices"
 	"tms-be/internal/users"
 
+	gormAdapter "github.com/casbin/gorm-adapter/v3"
 	"github.com/joho/godotenv"
 )
 
@@ -18,6 +19,15 @@ func main() {
 		return
 	}
 	db, err := database.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := db.AutoMigrate(&gormAdapter.CasbinRule{}); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("HasTable:", db.Migrator().HasTable(&gormAdapter.CasbinRule{}))
+
 	casbinModelPath := os.Getenv("APP_CASBIN_MODEL_PATH")
 	if casbinModelPath == "" {
 		casbinModelPath = "conf/casbin_model.conf"
